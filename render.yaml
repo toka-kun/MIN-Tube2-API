@@ -1,12 +1,7 @@
-version: 1
 services:
   - type: web
-    name: mintubeapi
+    name: MIN-Tube2
     env: node
     plan: free
-    buildCommand: npm install
-    startCommand: npm start
-    autoDeploy: true
-    envVars:
-      - key: NODE_VERSION
-        value: 16
+    buildCommand: "npm install"
+    startCommand: "npm start"
