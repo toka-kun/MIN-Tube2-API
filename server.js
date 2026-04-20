@@ -92,9 +92,13 @@ app.get('/api/video/:id', async (req, res) => {
     const formatStreams = videoInfo.formatStreams || [];
     const streamUrl = formatStreams.reverse().map(stream => stream.url)[0];
     const audioStreams = videoInfo.adaptiveFormats || [];
+    
+    // 修正箇所: mp4の中で解像度を持つものをフィルタリングし、解像度の数値で降順ソートして一番高いものを取得
     let highstreamUrl = audioStreams
-      .filter(stream => stream.container === 'mp4' && stream.resolution === '1080p')
+      .filter(stream => stream.container === 'mp4' && stream.resolution)
+      .sort((a, b) => parseInt(b.resolution) - parseInt(a.resolution))
       .map(stream => stream.url)[0];
+
     const audioUrl = audioStreams
       .filter(stream => stream.container === 'm4a' && stream.audioQuality === 'AUDIO_QUALITY_MEDIUM')
       .map(stream => stream.url)[0];
