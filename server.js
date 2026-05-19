@@ -91,11 +91,22 @@ app.get('/api/video/:id', async (req, res) => {
     const videoInfo = await ggvideo(videoId);
     const formatStreams = videoInfo.formatStreams || [];
     const streamUrl = formatStreams.reverse().map(stream => stream.url)[0];
-    const audioStreams = videoInfo.adaptiveFormats || [];
-    let highstreamUrl = audioStreams
-      .filter(stream => stream.container === 'mp4' && stream.resolution === '1080p')
-      .map(stream => stream.url)[0];
-    const audioUrl = audioStreams
+    const adaptiveFormats = videoInfo.adaptiveFormats || [];
+    
+    // itagの優先順位リスト: 299 -> 298 -> 136 -> 135 の順でフォールバック
+    const preferredItags = ['299', '298', '136', '135'];
+    let highstreamUrl = undefined;
+
+    for (const itag of preferredItags) {
+      // APIによってitagが数値型か文字列型か異なる場合を考慮し、String()で比較
+      const stream = adaptiveFormats.find(s => String(s.itag) === itag);
+      if (stream && stream.url) {
+        highstreamUrl = stream.url;
+        break; // 見つかったらループを抜ける
+      }
+    }
+
+    const audioUrl = adaptiveFormats
       .filter(stream => stream.container === 'm4a' && stream.audioQuality === 'AUDIO_QUALITY_MEDIUM')
       .map(stream => stream.url)[0];
       
