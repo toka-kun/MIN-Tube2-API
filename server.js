@@ -91,22 +91,15 @@ app.get('/api/video/:id', async (req, res) => {
     const videoInfo = await ggvideo(videoId);
     const formatStreams = videoInfo.formatStreams || [];
     const streamUrl = formatStreams.reverse().map(stream => stream.url)[0];
-    const adaptiveFormats = videoInfo.adaptiveFormats || [];
+    const audioStreams = videoInfo.adaptiveFormats || [];
     
-    // itagの優先順位リスト: 299 -> 298 -> 136 -> 135 の順でフォールバック
-    const preferredItags = ['299', '298', '136', '135'];
-    let highstreamUrl = undefined;
+    // 修正箇所: mp4の中で解像度を持つものをフィルタリングし、解像度の数値で降順ソートして一番高いものを取得
+    let highstreamUrl = audioStreams
+      .filter(stream => stream.container === 'mp4' && stream.resolution)
+      .sort((a, b) => parseInt(b.resolution) - parseInt(a.resolution))
+      .map(stream => stream.url)[0];
 
-    for (const itag of preferredItags) {
-      // APIによってitagが数値型か文字列型か異なる場合を考慮し、String()で比較
-      const stream = adaptiveFormats.find(s => String(s.itag) === itag);
-      if (stream && stream.url) {
-        highstreamUrl = stream.url;
-        break; // 見つかったらループを抜ける
-      }
-    }
-
-    const audioUrl = adaptiveFormats
+    const audioUrl = audioStreams
       .filter(stream => stream.container === 'm4a' && stream.audioQuality === 'AUDIO_QUALITY_MEDIUM')
       .map(stream => stream.url)[0];
       
